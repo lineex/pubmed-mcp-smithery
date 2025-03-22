@@ -1,4 +1,6 @@
-# PubMed Enhanced MCP Server
+# PubMed Enhanced Search MCP Server
+
+[![smithery badge](https://smithery.ai/badge/@leescot/pubmed-mcp-smithery)](https://smithery.ai/server/@leescot/pubmed-mcp-smithery)
 
 A Model Content Protocol server that provides enhanced tools to search and retrieve academic papers from PubMed database, with additional features such as MeSH term lookup, publication count statistics, and PICO-based evidence search.
 
