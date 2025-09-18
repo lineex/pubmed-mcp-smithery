@@ -1,20 +1,20 @@
 FROM python:3.10-alpine
 
-# Install system dependencies
+# 安装系统依赖项
 RUN apk add --no-cache build-base \
     && apk add --no-cache libffi-dev openssl-dev
 
-# Set working directory
+# 设置工作目录
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
+# 将当前目录内容复制到容器的 /app 目录
 COPY . /app
 
-# Upgrade pip
+# 升级 pip
 RUN pip install --upgrade pip
 
-# Install dependencies
-RUN pip install --no-cache-dir fastmcp requests
+# 安装依赖
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Run the MCP server
+# 运行 MCP 服务器
 CMD ["python", "pubmed_enhanced_mcp_server.py"]
