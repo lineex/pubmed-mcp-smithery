@@ -15,7 +15,7 @@ mcp = FastMCP("PubmedEnhanced")
 BASE_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 
 def make_request_with_retry(url, params, max_retries=3, wait_time=1.0):
-    """Send a request with a retry mechanism."""
+    """发送带重试机制的请求"""
     for i in range(max_retries):
         try:
             response = requests.get(url, params=params)
@@ -32,21 +32,19 @@ def make_request_with_retry(url, params, max_retries=3, wait_time=1.0):
 @mcp.tool()
 async def search_pubmed(keywords: List[str] = [], journal: Optional[str] = None, num_results: int = 10, sort_by: str = "relevance") -> Dict[str, Any]:
     """
-    Search the PubMed database using specified keywords and optional journal name.
+    使用指定的关键词和可选的期刊名搜索 PubMed 数据库。
     
-    This function allows users to search the PubMed database by providing keywords
-    and an optional journal name. It returns a specified number of
-    results in a formatted dictionary.
+    此函数允许用户通过提供关键词和可选的期刊名来搜索 PubMed 数据库。
+    它以格式化的字典形式返回指定数量的结果。
     
-    Parameters:
-    - keywords (List[str]): Keywords to search for in PubMed without field restrictions.
-    - journal (Optional[str]): Journal name to limit the search to a specific journal.
-    - num_results (int): Maximum number of results to return. Default is 10.
-    - sort_by (str): Sort order for results. Options: "relevance" (default), "date_desc" (newest first), "date_asc" (oldest first).
+    参数:
+    - keywords (List[str]): 在 PubMed 中搜索的关键词，没有字段限制。
+    - journal (Optional[str]): 用于将搜索限制到特定期刊的期刊名。
+    - num_results (int): 返回的最大结果数。默认为 10。
+    - sort_by (str): 结果的排序顺序。选项："relevance" (默认), "date_desc" (最新), "date_asc" (最旧)。
     
-    Returns:
-    - Dict[str, Any]: A dictionary containing the success status, a list of results with PubMed IDs,
-      links, abstracts, and the total number of results found.
+    返回:
+    - Dict[str, Any]: 包含成功状态、包含 PubMed ID、链接、摘要的结果列表以及找到的总结果数的字典。
     """
     try:
         query_parts = []
@@ -63,7 +61,7 @@ async def search_pubmed(keywords: List[str] = [], journal: Optional[str] = None,
         if not query:
             return {
                 "success": False,
-                "error": "No search parameters provided. Please specify keywords or journal.",
+                "error": "未提供搜索参数。请指定关键词或期刊。",
                 "results": []
             }
         
@@ -112,16 +110,16 @@ async def search_pubmed(keywords: List[str] = [], journal: Optional[str] = None,
 @mcp.tool()
 async def get_mesh_terms(search_word: str) -> Dict[str, Any]:
     """
-    Get MeSH (Medical Subject Headings) terms related to a search word.
+    获取与搜索词相关的 MeSH（医学主题词）术语。
     
-    This function queries the PubMed MeSH database to find relevant medical terminology
-    that matches the provided search term. Useful for finding standardized medical terms.
+    此函数查询 PubMed MeSH 数据库，以查找与提供的搜索词相匹配的相关医学术语。
+    对于寻找标准化医学术语非常有用。
     
-    Parameters:
-    - search_word (str): The word or phrase to search for in the MeSH database.
+    参数:
+    - search_word (str): 在 MeSH 数据库中搜索的词或短语。
     
-    Returns:
-    - Dict[str, Any]: A dictionary containing success status and a list of MeSH terms.
+    返回:
+    - Dict[str, Any]: 包含成功状态和 MeSH 术语列表的字典。
     """
     try:
         search_url = f"{BASE_URL}/esearch.fcgi"
@@ -174,22 +172,22 @@ async def get_mesh_terms(search_word: str) -> Dict[str, Any]:
 @mcp.tool()
 async def get_pubmed_count(search_terms: List[str]) -> Dict[str, Any]:
     """
-    Get the number of PubMed results for multiple search terms.
+    获取多个搜索词的 PubMed 结果数量。
     
-    This function queries PubMed and returns the count of results for each provided search term.
-    Useful for comparing the prevalence of different medical terms or concepts in the literature.
+    此函数查询 PubMed 并返回每个提供的搜索词的结果数量。
+    对于比较不同医学术语或概念在文献中的流行度很有用。
     
-    Parameters:
-    - search_terms (List[str]): List of search terms to query in PubMed.
+    参数:
+    - search_terms (List[str]): 要在 PubMed 中查询的搜索词列表。
     
-    Returns:
-    - Dict[str, Any]: A dictionary containing success status and counts for each search term.
+    返回:
+    - Dict[str, Any]: 包含成功状态和每个搜索词的数量的字典。
     """
     try:
         if not search_terms:
             return {
                 "success": False,
-                "error": "No search terms provided",
+                "error": "未提供搜索词",
                 "counts": {}
             }
             
@@ -222,16 +220,16 @@ async def get_pubmed_count(search_terms: List[str]) -> Dict[str, Any]:
 @mcp.tool()
 async def format_paper_details(pubmed_ids: List[str]) -> List[Dict[str, Any]]:
     """
-    Fetch and format details of multiple PubMed articles.
+    获取并格式化多个 PubMed 文章的详细信息。
     
-    This function retrieves details for a list of PubMed IDs and formats them
-    into a list of dictionaries containing article information.
+    此函数检索一系列 PubMed ID 的详细信息，并将其格式化为
+    包含文章信息的字典列表。
     
-    Parameters:
-    - pubmed_ids (List[str]): A list of PubMed IDs to fetch details for.
+    参数:
+    - pubmed_ids (List[str]): 要获取详细信息的 PubMed ID 列表。
     
-    Returns:
-    - List[Dict[str, Any]]: A list of dictionaries, each containing details of a PubMed article.
+    返回:
+    - List[Dict[str, Any]]: 字典列表，每个字典包含一篇 PubMed 文章的详细信息。
     """
     try:
         if not pubmed_ids:
@@ -251,7 +249,7 @@ async def format_paper_details(pubmed_ids: List[str]) -> List[Dict[str, Any]]:
         return []
 
 def parse_article_details(xml_content) -> List[Dict[str, Any]]:
-    """Parse XML content to extract article details"""
+    """解析 XML 内容以提取文章详细信息"""
     root = ET.fromstring(xml_content)
     articles = root.findall(".//PubmedArticle")
     results = []
@@ -326,7 +324,7 @@ def parse_article_details(xml_content) -> List[Dict[str, Any]]:
     return results
 
 def parse_mesh_text_response(text):
-    """Parse the text response from MeSH API to extract terms"""
+    """解析 MeSH API 的文本响应以提取术语"""
     entries = []
     current_entry = ""
     pattern = r'^\d+: (.+?)(?=\n|$)'
@@ -349,7 +347,7 @@ def parse_mesh_text_response(text):
     return entries
 
 def extract_count_from_xml(xml_text):
-    """Extract count value from XML response"""
+    """从 XML 响应中提取计数值"""
     tree = ET.fromstring(xml_text)
     count_element = tree.find("Count")
     if count_element is not None:
@@ -360,25 +358,25 @@ def extract_count_from_xml(xml_text):
 @mcp.tool()
 async def pico_search(p_terms: List[str] = [], i_terms: List[str] = [], c_terms: List[str] = [], o_terms: List[str] = []) -> Dict[str, Any]:
     """
-    Perform PICO (Population, Intervention, Comparison, Outcome) based PubMed search with synonyms.
+    使用 PICO（人群、干预、对照、结果）和同义词进行 PubMed 搜索。
     
-    This function takes lists of terms for each PICO element, combines them with OR within each element,
-    and then performs various AND combinations between elements. Returns search queries and result counts.
+    此函数接收每个 PICO 元素的术语列表，在每个元素内部用 OR 组合它们，
+    然后在元素之间执行各种 AND 组合。返回搜索查询和结果数量。
     
-    Parameters:
-    - p_terms (List[str]): Population terms/synonyms (at least 2 recommended)
-    - i_terms (List[str]): Intervention terms/synonyms (at least 2 recommended)
-    - c_terms (List[str]): Comparison terms/synonyms (optional, at least 2 recommended if provided)
-    - o_terms (List[str]): Outcome terms/synonyms (optional, at least 2 recommended if provided)
+    参数:
+    - p_terms (List[str]): 人群术语/同义词（建议至少 2 个）
+    - i_terms (List[str]): 干预术语/同义词（建议至少 2 个）
+    - c_terms (List[str]): 对照术语/同义词（可选，如果提供建议至少 2 个）
+    - o_terms (List[str]): 结果术语/同义词（可选，如果提供建议至少 2 个）
     
-    Returns:
-    - Dict[str, Any]: A dictionary containing individual element searches and combination searches with queries and result counts
+    返回:
+    - Dict[str, Any]: 一个字典，包含单个元素搜索和组合搜索的查询和结果数量。
     """
     try:
         if len(p_terms) < 1 or len(i_terms) < 1:
             return {
                 "success": False,
-                "error": "At least P (Population) and I (Intervention) terms are required with multiple synonyms recommended.",
+                "error": "至少需要 P (人群) 和 I (干预) 术语，并建议提供多个同义词。",
                 "results": {}
             }
             
@@ -396,69 +394,4 @@ async def pico_search(p_terms: List[str] = [], i_terms: List[str] = [], c_terms:
             
             return full_query, count
         
-        p_query, p_count = await process_element("Population", p_terms)
-        i_query, i_count = await process_element("Intervention", i_terms)
-        c_query, c_count = await process_element("Comparison", c_terms)
-        o_query, o_count = await process_element("Outcome", o_terms)
-        
-        results["individual"] = {
-            "P": {"query": p_query, "count": p_count},
-            "I": {"query": i_query, "count": i_count}
-        }
-        
-        if c_terms:
-            results["individual"]["C"] = {"query": c_query, "count": c_count}
-        
-        if o_terms:
-            results["individual"]["O"] = {"query": o_query, "count": o_count}
-        
-        combinations = {}
-        
-        pi_query = f"{p_query} AND {i_query}"
-        pi_count_result = await get_pubmed_count([pi_query])
-        combinations["P_AND_I"] = {
-            "query": pi_query,
-            "count": pi_count_result.get("counts", {}).get(pi_query, 0)
-        }
-        
-        if c_terms:
-            pic_query = f"{p_query} AND {i_query} AND {c_query}"
-            pic_count_result = await get_pubmed_count([pic_query])
-            combinations["P_AND_I_AND_C"] = {
-                "query": pic_query,
-                "count": pic_count_result.get("counts", {}).get(pic_query, 0)
-            }
-        
-        if o_terms:
-            pio_query = f"{p_query} AND {i_query} AND {o_query}"
-            pio_count_result = await get_pubmed_count([pio_query])
-            combinations["P_AND_I_AND_O"] = {
-                "query": pio_query,
-                "count": pio_count_result.get("counts", {}).get(pio_query, 0)
-            }
-        
-        if c_terms and o_terms:
-            pico_query = f"{p_query} AND {i_query} AND {c_query} AND {o_query}"
-            pico_count_result = await get_pubmed_count([pico_query])
-            combinations["P_AND_I_AND_C_AND_O"] = {
-                "query": pico_query,
-                "count": pico_count_result.get("counts", {}).get(pico_query, 0)
-            }
-        
-        results["combinations"] = combinations
-        
-        return {
-            "success": True,
-            "results": results
-        }
-        
-    except Exception as e:
-        logger.error(f"Error in pico_search: {str(e)}")
-        return {
-            "success": False,
-            "error": str(e),
-            "results": {}
-        }
-
-if __name__ == "__main__":
-    mcp.run()
+        p_query, p_count = await process
