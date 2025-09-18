@@ -15,7 +15,7 @@ mcp = FastMCP("PubmedEnhanced")
 BASE_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 
 def make_request_with_retry(url, params, max_retries=3, wait_time=1.0):
-    """發送帶有重試機制的請求"""
+    """Send a request with a retry mechanism."""
     for i in range(max_retries):
         try:
             response = requests.get(url, params=params)
@@ -23,7 +23,7 @@ def make_request_with_retry(url, params, max_retries=3, wait_time=1.0):
             return response
         except requests.exceptions.RequestException as e:
             logger.error(f"Request failed: {str(e)}")
-            if i < max_retries - 1:  # Don't sleep on the last retry
+            if i < max_retries - 1:
                 time.sleep(wait_time)
                 wait_time *= 2
             else:
@@ -69,12 +69,11 @@ async def search_pubmed(keywords: List[str] = [], journal: Optional[str] = None,
         
         logger.info(f"Search query: {query}")
         
-        # Map sort_by parameter to PubMed sort parameter
         sort_param = ""
         if sort_by == "date_desc":
             sort_param = "pub date"
         elif sort_by == "date_asc":
-            sort_param = "pub date"  # We'll reverse the results later
+            sort_param = "pub date"
         
         search_url = f"{BASE_URL}/esearch.fcgi"
         search_params = {
@@ -125,7 +124,6 @@ async def get_mesh_terms(search_word: str) -> Dict[str, Any]:
     - Dict[str, Any]: A dictionary containing success status and a list of MeSH terms.
     """
     try:
-        # 步驟 1：查詢 MeSH IDs
         search_url = f"{BASE_URL}/esearch.fcgi"
         search_params = {
             "db": "mesh",
@@ -149,7 +147,6 @@ async def get_mesh_terms(search_word: str) -> Dict[str, Any]:
                 "mesh_terms": []
             }
 
-        # 步驟 2：獲取描述符
         fetch_url = f"{BASE_URL}/efetch.fcgi"
         fetch_params = {
             "db": "mesh",
@@ -262,7 +259,6 @@ def parse_article_details(xml_content) -> List[Dict[str, Any]]:
     for article in articles:
         title = article.findtext(".//ArticleTitle", default="N/A")
         
-        # Extract abstract with sections if available
         abstract_sections = article.findall(".//Abstract/AbstractText")
         if abstract_sections:
             abstract_parts = []
@@ -282,27 +278,22 @@ def parse_article_details(xml_content) -> List[Dict[str, Any]]:
         issue = article.findtext(".//Journal/JournalIssue/Issue", default="N/A")
         pages = article.findtext(".//Pagination/MedlinePgn", default="N/A")
         
-        # Extract DOI if available
         doi_elem = article.find(".//ELocationID[@EIdType='doi']")
         doi = doi_elem.text if doi_elem is not None else "N/A"
         
-        # Extract publication date elements
         year = article.findtext(".//PubDate/Year", default="")
         month = article.findtext(".//PubDate/Month", default="")
         day = article.findtext(".//PubDate/Day", default="")
         
-        # Format publication date
         pubdate_parts = [part for part in [year, month, day] if part]
         pubdate = "-".join(pubdate_parts) if pubdate_parts else "N/A"
         
-        # Extract authors
         authors = []
         for author in article.findall(".//Author"):
             lastname = author.findtext("LastName", default="")
             forename = author.findtext("ForeName", default="")
             initials = author.findtext("Initials", default="")
             
-            # Create author name based on available information
             if lastname and forename:
                 authors.append(f"{lastname} {forename}")
             elif lastname and initials:
@@ -310,7 +301,6 @@ def parse_article_details(xml_content) -> List[Dict[str, Any]]:
             elif lastname:
                 authors.append(lastname)
         
-        # Extract keywords/MeSH terms
         keywords = []
         for keyword in article.findall(".//MeshHeading/DescriptorName"):
             if keyword.text:
@@ -330,7 +320,7 @@ def parse_article_details(xml_content) -> List[Dict[str, Any]]:
             "doi": doi,
             "pubdate": pubdate,
             "abstract": abstract,
-            "keywords": keywords[:10] if keywords else []  # Limit to 10 keywords
+            "keywords": keywords[:10] if keywords else []
         })
     
     return results
@@ -394,7 +384,6 @@ async def pico_search(p_terms: List[str] = [], i_terms: List[str] = [], c_terms:
             
         results = {}
         
-        # Function to construct element query and get count
         async def process_element(element_name: str, terms: List[str]) -> Tuple[str, int]:
             if not terms:
                 return "", 0
@@ -402,19 +391,16 @@ async def pico_search(p_terms: List[str] = [], i_terms: List[str] = [], c_terms:
             element_query = " OR ".join([f"({term})" for term in terms])
             full_query = f"({element_query})"
             
-            # Get count using the existing function
             count_result = await get_pubmed_count([full_query])
             count = count_result.get("counts", {}).get(full_query, 0)
             
             return full_query, count
         
-        # Process each PICO element individually
         p_query, p_count = await process_element("Population", p_terms)
         i_query, i_count = await process_element("Intervention", i_terms)
         c_query, c_count = await process_element("Comparison", c_terms)
         o_query, o_count = await process_element("Outcome", o_terms)
         
-        # Store individual element results
         results["individual"] = {
             "P": {"query": p_query, "count": p_count},
             "I": {"query": i_query, "count": i_count}
@@ -426,10 +412,8 @@ async def pico_search(p_terms: List[str] = [], i_terms: List[str] = [], c_terms:
         if o_terms:
             results["individual"]["O"] = {"query": o_query, "count": o_count}
         
-        # Perform combinations
         combinations = {}
         
-        # P AND I
         pi_query = f"{p_query} AND {i_query}"
         pi_count_result = await get_pubmed_count([pi_query])
         combinations["P_AND_I"] = {
@@ -437,7 +421,6 @@ async def pico_search(p_terms: List[str] = [], i_terms: List[str] = [], c_terms:
             "count": pi_count_result.get("counts", {}).get(pi_query, 0)
         }
         
-        # P AND I AND C (if C exists)
         if c_terms:
             pic_query = f"{p_query} AND {i_query} AND {c_query}"
             pic_count_result = await get_pubmed_count([pic_query])
@@ -446,7 +429,6 @@ async def pico_search(p_terms: List[str] = [], i_terms: List[str] = [], c_terms:
                 "count": pic_count_result.get("counts", {}).get(pic_query, 0)
             }
         
-        # P AND I AND O (if O exists)
         if o_terms:
             pio_query = f"{p_query} AND {i_query} AND {o_query}"
             pio_count_result = await get_pubmed_count([pio_query])
@@ -455,7 +437,6 @@ async def pico_search(p_terms: List[str] = [], i_terms: List[str] = [], c_terms:
                 "count": pio_count_result.get("counts", {}).get(pio_query, 0)
             }
         
-        # P AND I AND C AND O (if both C and O exist)
         if c_terms and o_terms:
             pico_query = f"{p_query} AND {i_query} AND {c_query} AND {o_query}"
             pico_count_result = await get_pubmed_count([pico_query])
